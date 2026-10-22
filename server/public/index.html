@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生成绩管理系统</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f0f4f8; color: #2d3748; min-height: 100vh;
+  }
+
+  /* ============ 登录 / 注册页 ============ */
+  .login-page {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px; background: linear-gradient(135deg, #4c6ef5 0%, #7048e8 100%);
+  }
+  .login-card {
+    background: #fff; border-radius: 18px; padding: 36px 32px 28px;
+    width: 100%; max-width: 390px; box-shadow: 0 24px 60px rgba(0,0,0,.28);
+  }
+  .login-card.shake { animation: shake .32s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-7px); }
+    75% { transform: translateX(7px); }
+  }
+  .login-logo {
+    width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 16px;
+    background: linear-gradient(135deg,#4c6ef5,#7048e8);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; box-shadow: 0 8px 20px rgba(76,110,245,.35);
+  }
+  .login-card h2 { text-align: center; font-size: 19px; font-weight: 700; color: #2d3748; }
+  .login-sub { text-align: center; font-size: 13px; color: #a0aec0; margin: 7px 0 24px; }
+  .login-field { margin-bottom: 15px; }
+  .login-field label { display: block; font-size: 12.5px; color: #718096; margin-bottom: 6px; }
+  .login-field input {
+    width: 100%; padding: 11px 13px; border: 1px solid #cbd5e0; border-radius: 9px;
+    font-size: 14.5px; font-family: inherit; transition: border-color .2s, box-shadow .2s;
+  }
+  .login-field input:focus {
+    outline: none; border-color: #4c6ef5; box-shadow: 0 0 0 3px rgba(76,110,245,.15);
+  }
+  .login-error { min-height: 18px; font-size: 12.5px; color: #e03131; margin-bottom: 10px; text-align: center; }
+  .login-btn {
+    width: 100%; padding: 12px; font-size: 15px; font-weight: 600; letter-spacing: 2px;
+    border-radius: 9px; background: linear-gradient(135deg,#4c6ef5,#7048e8);
+    color: #fff; border: none; cursor: pointer; transition: opacity .2s, transform .1s;
+  }
+  .login-btn:hover { opacity: .92; }
+  .login-btn:active { transform: translateY(1px); }
+  .switch-line {
+    margin-top: 18px; text-align: center; font-size: 13px; color: #718096;
+  }
+  .switch-line a {
+    color: #4c6ef5; font-weight: 600; text-decoration: none; cursor: pointer;
+  }
+  .switch-line a:hover { text-decoration: underline; }
+  .login-tips {
+    margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;
+    font-size: 12px; color: #a0aec0; line-height: 1.9; text-align: center;
+  }
+  .login-tips code {
+    background: #edf2f7; color: #4c6ef5; padding: 1px 6px;
+    border-radius: 4px; font-family: Consolas, monospace; font-size: 11.5px;
+  }
+
+  /* ============ 主应用 ============ */
+  .app-page { padding: 20px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg,#4c6ef5,#7048e8); color: #fff;
+    padding: 20px 26px; border-radius: 12px; margin-bottom: 18px;
+    box-shadow: 0 4px 16px rgba(76,110,245,.3);
+  }
+  .header-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 21px; font-weight: 600; }
+  header p { font-size: 13px; opacity: .85; margin-top: 6px; }
+  .user-box {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.16); padding: 6px 10px 6px 6px; border-radius: 30px;
+  }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: #fff; color: #4c6ef5;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; flex: none;
+  }
+  .user-name { font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .user-role { font-size: 11px; opacity: .8; }
+  .btn-logout {
+    background: rgba(255,255,255,.22); color: #fff; padding: 6px 15px; border-radius: 20px;
+    font-size: 13px; border: none; cursor: pointer; transition: background .2s; font-family: inherit;
+  }
+  .btn-logout:hover { background: rgba(255,255,255,.34); }
+
+  .panel {
+    background: #fff; border-radius: 12px; padding: 20px 24px;
+    margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  }
+  .panel h2 {
+    font-size: 15px; font-weight: 600; margin-bottom: 14px; color: #4c6ef5;
+    padding-left: 10px; border-left: 4px solid #4c6ef5;
+  }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 12px; margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; color: #718096; margin-bottom: 5px; }
+  .field input {
+    width: 100%; padding: 9px 11px; border: 1px solid #cbd5e0; border-radius: 7px;
+    font-size: 14px; font-family: inherit; transition: border-color .2s, box-shadow .2s;
+  }
+  .field input:focus { outline: none; border-color: #4c6ef5; box-shadow: 0 0 0 3px rgba(76,110,245,.15); }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  button {
+    padding: 9px 18px; border: none; border-radius: 7px; font-size: 14px;
+    cursor: pointer; transition: all .2s; font-family: inherit;
+  }
+  button:active { transform: translateY(1px); }
+  .btn-primary { background: #4c6ef5; color: #fff; } .btn-primary:hover { background: #4263eb; }
+  .btn-success { background: #37b24d; color: #fff; } .btn-success:hover { background: #2f9e44; }
+  .btn-success:disabled { background: #cbd5e0; color: #fff; cursor: not-allowed; }
+  .btn-danger { background: #f03e3e; color: #fff; } .btn-danger:hover { background: #e03131; }
+  .btn-ghost { background: #e2e8f0; color: #4a5568; } .btn-ghost:hover { background: #cbd5e0; }
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .toolbar input {
+    padding: 9px 12px; border: 1px solid #cbd5e0; border-radius: 7px;
+    font-size: 14px; width: 240px; font-family: inherit;
+  }
+  .toolbar input:focus { outline: none; border-color: #4c6ef5; box-shadow: 0 0 0 3px rgba(76,110,245,.15); }
+  .hint { font-size: 12px; color: #a0aec0; }
+  .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px; }
+  thead th {
+    background: #f7fafc; color: #4a5568; font-weight: 600; font-size: 13px;
+    padding: 11px 10px; text-align: center; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
+  }
+  tbody td { padding: 10px; text-align: center; border-bottom: 1px solid #edf2f7; }
+  tbody tr:hover { background: #f7f9ff; }
+  tbody tr:last-child td { border-bottom: none; }
+  .score-high { color: #2f9e44; font-weight: 600; }
+  .score-mid  { color: #e8590c; font-weight: 600; }
+  .score-low  { color: #e03131; font-weight: 600; }
+  .rank {
+    display: inline-block; width: 22px; height: 22px; line-height: 22px;
+    border-radius: 50%; font-size: 12px; background: #e2e8f0; color: #4a5568;
+  }
+  .rank-1 { background: #ffd43b; color: #7a5b00; }
+  .rank-2 { background: #ced4da; color: #495057; }
+  .rank-3 { background: #f4a261; color: #7a3e00; }
+  .empty { text-align: center; padding: 40px 10px; color: #a0aec0; font-size: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 12px; margin-top: 16px; }
+  .stat { background: #f7fafc; border-radius: 9px; padding: 14px 16px; border-left: 4px solid #4c6ef5; }
+  .stat .label { font-size: 12px; color: #718096; margin-bottom: 5px; }
+  .stat .value { font-size: 20px; font-weight: 700; color: #2d3748; }
+  .stat .value small { font-size: 13px; font-weight: 400; color: #a0aec0; }
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .badge-admin { background: #dbe4ff; color: #3b5bdb; }
+  .badge-student { background: #d3f9d8; color: #2b8a3e; }
+
+  .my-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
+    padding-bottom: 18px; border-bottom: 1px dashed #e2e8f0;
+  }
+  .avatar.big {
+    width: 54px; height: 54px; font-size: 23px;
+    background: linear-gradient(135deg,#4c6ef5,#7048e8); color: #fff;
+  }
+  .my-name { font-size: 18px; font-weight: 700; }
+  .my-meta { font-size: 13px; color: #718096; margin-top: 4px; }
+  .my-subjects { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 14px; margin-bottom: 16px; }
+  .subject-card {
+    border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px 14px;
+    text-align: center; background: #f8fafc; transition: transform .2s, box-shadow .2s;
+  }
+  .subject-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(76,110,245,.12); }
+  .subject-name { font-size: 13px; color: #718096; margin-bottom: 8px; }
+  .subject-score { font-size: 30px; font-weight: 700; line-height: 1.1; }
+  .subject-level { font-size: 12px; color: #a0aec0; margin-top: 8px; }
+  .notice {
+    background: #fff4e6; border: 1px solid #ffd8a8; color: #d9480f;
+    padding: 12px 16px; border-radius: 9px; font-size: 13px; margin-bottom: 16px;
+  }
+
+  .toast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: #2d3748; color: #fff; padding: 12px 24px; border-radius: 8px;
+    font-size: 14px; opacity: 0; transition: all .3s; pointer-events: none; z-index: 999;
+    box-shadow: 0 6px 20px rgba(0,0,0,.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.error { background: #e03131; }
+  .toast.success { background: #2f9e44; }
+</style>
+</head>
+<body>
+
+<!-- ==================== 登录 / 注册页 ==================== -->
+<div class="login-page" id="loginPage">
+
+  <!-- 登录卡片 -->
+  <form class="login-card" id="loginForm" autocomplete="off">
+    <div class="login-logo">📊</div>
+    <h2>学生成绩管理系统</h2>
+    <p class="login-sub">请使用学号和密码登录</p>
+    <div class="login-field">
+      <label>学号</label>
+      <input type="text" id="login-user" placeholder="请输入学号">
+    </div>
+    <div class="login-field">
+      <label>密码</label>
+      <input type="password" id="login-pass" placeholder="请输入密码">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button type="submit" class="login-btn">登 录</button>
+    <div class="switch-line">还没有账号？<a id="to-register">立即注册</a></div>
+    <div class="login-tips">新注册用户初始密码为 <code>123456</code></div>
+  </form>
+
+  <!-- 注册卡片 -->
+  <form class="login-card" id="registerForm" autocomplete="off" style="display:none">
+    <div class="login-logo">📝</div>
+    <h2>注册新账号</h2>
+    <p class="login-sub">创建你的学号账号，初始密码统一为 123456</p>
+    <div class="login-field">
+      <label>学号（登录用户名） *</label>
+      <input type="text" id="reg-id" placeholder="如 2024001">
+    </div>
+    <div class="login-field">
+      <label>姓名 *</label>
+      <input type="text" id="reg-name" placeholder="如 张三">
+    </div>
+    <div class="login-error" id="reg-error"></div>
+    <button type="submit" class="login-btn">注 册</button>
+    <div class="switch-line">已有账号？<a id="to-login">返回登录</a></div>
+    <div class="login-tips">
+      注册成功后请用 <code>123456</code> 登录，登录后可查看成绩
+    </div>
+  </form>
+</div>
+
+<!-- ==================== 主应用 ==================== -->
+<div class="app-page" id="appPage" style="display:none">
+  <div class="container">
+    <header>
+      <div class="header-inner">
+        <div>
+          <h1>📊 学生成绩管理系统</h1>
+          <p id="header-tip">支持录入、修改、删除、查询与统计分析 · 数据保存在服务器，多台设备同步</p>
+        </div>
+        <div class="user-box">
+          <div class="avatar" id="user-avatar">管</div>
+          <div>
+            <div class="user-name" id="user-name">管理员</div>
+            <div class="user-role" id="user-role">管理员</div>
+          </div>
+          <button class="btn-logout" id="btnLogout" title="退出后可切换其他账号登录">退出登录</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 管理员：录入 / 编辑 -->
+    <div class="panel" id="entryPanel">
+      <h2 id="form-title">录入学生成绩</h2>
+      <div class="form-grid">
+        <div class="field"><label>学号 *</label><input type="text" id="inp-id" placeholder="如 2024001"></div>
+        <div class="field"><label>姓名 *</label><input type="text" id="inp-name" placeholder="如 张三"></div>
+        <div class="field"><label>语文 *</label><input type="number" id="inp-chinese" min="0" max="100" step="0.5" placeholder="0-100"></div>
+        <div class="field"><label>数学 *</label><input type="number" id="inp-math" min="0" max="100" step="0.5" placeholder="0-100"></div>
+        <div class="field"><label>英语 *</label><input type="number" id="inp-english" min="0" max="100" step="0.5" placeholder="0-100"></div>
+        <div class="field"><label>登录密码</label><input type="text" id="inp-password" placeholder="留空默认 123456"></div>
+      </div>
+      <div class="btns">
+        <button class="btn-primary" id="btn-add">➕ 添加学生</button>
+        <button class="btn-success" id="btn-update" disabled>✏️ 保存修改</button>
+        <button class="btn-ghost" id="btn-reset">🔄 清空输入</button>
+      </div>
+    </div>
+
+    <!-- 管理员：学生名单 -->
+    <div class="panel" id="listPanel">
+      <h2>学生名单</h2>
+      <div class="toolbar">
+        <input type="text" id="inp-search" placeholder="🔍 按学号或姓名搜索...">
+        <span class="hint">点击表格中的「编辑」按钮可修改该学生</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>排名</th><th>学号</th><th>姓名</th>
+              <th>语文</th><th>数学</th><th>英语</th>
+              <th>总分</th><th>平均分</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <!-- 管理员：登录记录 -->
+    <div class="panel" id="logPanel">
+      <h2>登录记录</h2>
+      <div class="toolbar">
+        <span class="hint" id="log-count">暂无登录记录</span>
+        <button class="btn-ghost" id="btn-clear-logs" style="padding:6px 14px;font-size:13px">清空记录</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>登录时间</th><th>用户名</th><th>姓名</th><th>角色</th></tr>
+          </thead>
+          <tbody id="log-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 学生：我的成绩 -->
+    <div class="panel" id="myScorePanel" style="display:none">
+      <h2>我的成绩</h2>
+      <div id="my-notice"></div>
+      <div class="my-header">
+        <div class="avatar big" id="my-avatar">?</div>
+        <div>
+          <div class="my-name" id="my-name">-</div>
+          <div class="my-meta" id="my-meta">-</div>
+        </div>
+      </div>
+      <div class="my-subjects" id="my-subjects"></div>
+      <div class="stats" id="my-summary"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="./app.js"></script>
+</body>
+</html>
