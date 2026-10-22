@@ -41,6 +41,9 @@ async function call(method, path, { token, body } = {}) {
   const adminToken = login.data.token;
   check('返回角色为 admin', login.data.user.role === 'admin');
 
+  // 清掉历史登录记录，让后面的日志断言是确定值
+  await call('DELETE', '/api/logs', { token: login.data.token });
+
   console.log('\n== 增删改查 ==');
   const created = await call('POST', '/api/students', {
     token: adminToken,
@@ -80,6 +83,21 @@ async function call(method, path, { token, body } = {}) {
   const afterUpd = await call('GET', '/api/students', { token: adminToken });
   check('改分后排名变化', afterUpd.data.students[0].name === '李四四', afterUpd.data.students[0].name);
 
+  console.log('\n== 导出成绩表 ==');
+  const csvRes = await fetch(BASE + '/api/export', { headers: { Authorization: 'Bearer ' + adminToken } });
+  const csvBuf = Buffer.from(await csvRes.arrayBuffer());
+  const csvText = csvBuf.toString('utf8');   // .text() 会自动去掉 BOM，所以这里读字节
+  check('管理员可导出 CSV', csvRes.status === 200, csvRes.status);
+  check('Content-Type 为 text/csv', String(csvRes.headers.get('content-type')).includes('text/csv'), csvRes.headers.get('content-type'));
+  check('带 UTF-8 BOM（Excel 不乱码）',
+    csvBuf[0] === 0xEF && csvBuf[1] === 0xBB && csvBuf[2] === 0xBF,
+    [...csvBuf.subarray(0, 3)]);
+  check('表头正确', csvText.includes('排名,学号,姓名,语文,数学,英语,总分,平均分'));
+  check('包含学生数据', csvText.includes('张三') && csvText.includes('2024001'));
+  check('行数 = 表头 + 2 名学生', csvText.trim().split(/\r?\n/).length === 3, csvText.trim().split(/\r?\n/).length);
+  check('响应是附件下载', String(csvRes.headers.get('content-disposition')).includes('attachment'));
+  check('文件名带日期', /成绩表_\d{8}\.csv/.test(decodeURIComponent(csvRes.headers.get('content-disposition'))));
+
   console.log('\n== 学生账号 ==');
   const reg = await call('POST', '/api/register', { body: { id: '2024003', name: '王五' } });
   check('学生注册成功', reg.status === 200, reg);
@@ -104,12 +122,15 @@ async function call(method, path, { token, body } = {}) {
   });
   check('学生无法自己加学生', selfUpgrade.status === 403, selfUpgrade.status);
 
+  const csvStudent = await fetch(BASE + '/api/export', { headers: { Authorization: 'Bearer ' + stuToken } });
+  check('学生不能导出全班成绩', csvStudent.status === 403, csvStudent.status);
+
   console.log('\n== 会话与日志 ==');
   const sess = await call('GET', '/api/session', { token: stuToken });
   check('会话校验通过', sess.status === 200 && sess.data.user.id === '2024003', sess);
 
   const logs = await call('GET', '/api/logs', { token: adminToken });
-  check('登录记录已写入（管理员 + 学生各一条）', logs.data.logs.length === 2, logs.data.logs.length);
+  check('登录记录已写入（开始清空过，只剩学生这一条）', logs.data.logs.length === 1, logs.data.logs.length);
   check('日志不含密码', JSON.stringify(logs.data.logs).indexOf('123456') === -1);
 
   console.log('\n== 删除与退出 ==');

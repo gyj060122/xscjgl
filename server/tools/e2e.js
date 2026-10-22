@@ -114,6 +114,14 @@ async function main() {
 
   const rank = await evalJs('document.querySelector("#tbody tr .rank").textContent.trim()');
   check('排名显示为第 1', rank === '1', rank);
+
+  console.log('\n== 导出成绩表 ==');
+  check('名单工具栏有导出按钮', await evalJs('!!document.getElementById("btn-export")'));
+  await evalJs('document.getElementById("btn-export").click(); true');
+  await waitFor('document.getElementById("toast").textContent.includes("已导出")', 8000, '导出成功提示');
+  const exportToast = await evalJs('document.getElementById("toast").textContent');
+  check('点击导出后提示成功', exportToast.includes('已导出'), exportToast);
+
   await shot('02-admin.png');
 
   console.log('\n== 学生查看自己的成绩 ==');

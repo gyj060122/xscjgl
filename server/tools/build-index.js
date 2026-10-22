@@ -12,6 +12,14 @@ const from = '支持录入、修改、删除、查询与统计分析 · 数据�
 if (!head.includes(from)) throw new Error('未找到 header-tip 文案');
 head = head.replace(from, '支持录入、修改、删除、查询与统计分析 · 数据保存在服务器，多台设备同步');
 
+// 在「学生名单」工具栏里加一个导出按钮（后端版独有）
+const toolbarAnchor = '<span class="hint">点击表格中的「编辑」按钮可修改该学生</span>';
+if (!head.includes(toolbarAnchor)) throw new Error('未找到名单工具栏');
+head = head.replace(
+  toolbarAnchor,
+  toolbarAnchor + '\n        <button class="btn-ghost" id="btn-export" style="padding:6px 14px;font-size:13px">⬇️ 导出成绩表</button>'
+);
+
 const out = head + '<script src="./app.js"></script>\r\n</body>\r\n</html>\r\n';
 fs.writeFileSync(OUT, out, 'utf8');
 

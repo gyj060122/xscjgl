@@ -347,6 +347,40 @@
     }
   }
 
+  // 导出成绩表（CSV，Excel / WPS 可直接打开）
+  async function exportScores() {
+    if (students.length === 0) { toast('暂无学生数据可导出', 'error'); return; }
+    try {
+      const res = await fetch(API_BASE + '/api/export', {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      });
+      if (!res.ok) {
+        let msg = `导出失败（HTTP ${res.status}）`;
+        try { const j = await res.json(); if (j && j.error) msg = j.error; } catch (e) {}
+        throw new ApiError(msg, res.status);
+      }
+      const blob = await res.blob();
+      // 文件名优先取后端 Content-Disposition 里的中文名
+      let name = '成绩表.csv';
+      const cd = res.headers.get('Content-Disposition') || '';
+      const m = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+      if (m) { try { name = decodeURIComponent(m[1]); } catch (e) {} }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast(`已导出 ${students.length} 条记录`, 'success');
+    } catch (err) {
+      if (handleAuthError(err)) return;
+      toast(err.message || '导出失败', 'error');
+    }
+  }
+
   // ================= 渲染 =================
   function renderAll() {
     if (!currentUser) return;
@@ -530,6 +564,8 @@
   $('btn-reset').addEventListener('click', resetForm);
   $('inp-search').addEventListener('input', renderAdminTable);
   $('btn-clear-logs').addEventListener('click', clearLogs);
+  const exportBtn = $('btn-export');
+  if (exportBtn) exportBtn.addEventListener('click', exportScores);
 
   Object.values(inputs).forEach(el => {
     el.addEventListener('keydown', e => {

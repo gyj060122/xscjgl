@@ -81,6 +81,7 @@ xscjgl-server/
 | GET | `/api/session` | 登录 | 校验 token、恢复登录态 |
 | POST | `/api/logout` | 登录 | 退出并作废 token |
 | GET | `/api/students` | 管理员 | 全班名单（带排名） |
+| GET | `/api/export` | 管理员 | 导出成绩表 CSV |
 | POST | `/api/students` | 管理员 | 新增学生 |
 | PUT | `/api/students/:id` | 管理员 | 修改学生 |
 | DELETE | `/api/students/:id` | 管理员 | 删除学生 |
@@ -103,7 +104,17 @@ xscjgl-server/
 局限（局域网教学环境可接受）：HTTP 明文传输、没有 CSRF 防护、没有 HTTPS 证书。
 真要放到公网，请套一层 Nginx + HTTPS，并把默认管理员密码换掉。
 
-## 八、跑测试
+## 八、导出成绩表
+
+管理员登录后，在「学生名单」工具栏点 **⬇️ 导出成绩表**，浏览器会直接下载
+`成绩表_YYYYMMDD.csv`。
+
+- 文件开头带 UTF-8 BOM，Excel / WPS 双击打开中文不会乱码
+- 列：排名、学号、姓名、语文、数学、英语、总分、平均分
+- 导出的永远是全部学生，不受搜索框筛选影响
+- 也可以直接调接口：`GET /api/export`（需带上管理员令牌）
+
+## 九、跑测试
 
 ```bat
 :: 先启动服务，然后另开一个窗口

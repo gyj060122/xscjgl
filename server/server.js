@@ -211,6 +211,12 @@ function send(res, status, payload) {
   res.end(body);
 }
 
+// CSV 字段转义：含逗号、引号、换行时用双引号包起来
+function csvCell(value) {
+  const s = String(value == null ? '' : value);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
 function readJson(req) {
   return new Promise((resolve, reject) => {
     let size = 0;
@@ -478,6 +484,38 @@ async function route(req, res) {
     const me = all.find((s) => s.id === sess.id);
     if (!me) throw new HttpError(404, '账号信息已失效，请重新登录');
     return send(res, 200, { student: me, rank: me.rank, total: all.length });
+  }
+
+  // ---------------- 导出成绩表（管理员，CSV 可直接用 Excel / WPS 打开）
+  if (pathname === '/api/export' && method === 'GET') {
+    requireAdmin(req);
+    const rows = rankedStudents();
+    const header = ['排名', '学号', '姓名', '语文', '数学', '英语', '总分', '平均分'];
+    const lines = [header.join(',')];
+    for (const s of rows) {
+      lines.push([
+        s.rank,
+        s.id,
+        s.name,
+        s.chinese,
+        s.math,
+        s.english,
+        s.total,
+        Math.round((s.total / SUBJECTS.length) * 10) / 10
+      ].map(csvCell).join(','));
+    }
+    // 前面加 BOM，Excel 才不会把中文显示成乱码
+    const body = '\uFEFF' + lines.join('\r\n') + '\r\n';
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    const filename = `成绩表_${stamp}.csv`;
+    res.writeHead(200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="scores_${stamp}.csv"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff'
+    });
+    return res.end(body);
   }
 
   // ---------------- 登录记录（管理员）
