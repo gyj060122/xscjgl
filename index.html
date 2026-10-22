@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生成绩管理系统</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f0f4f8; color: #2d3748; min-height: 100vh;
+  }
+
+  /* ============ 登录 / 注册页 ============ */
+  .login-page {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px; background: linear-gradient(135deg, #4c6ef5 0%, #7048e8 100%);
+  }
+  .login-card {
+    background: #fff; border-radius: 18px; padding: 36px 32px 28px;
+    width: 100%; max-width: 390px; box-shadow: 0 24px 60px rgba(0,0,0,.28);
+  }
+  .login-card.shake { animation: shake .32s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-7px); }
+    75% { transform: translateX(7px); }
+  }
+  .login-logo {
+    width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 16px;
+    background: linear-gradient(135deg,#4c6ef5,#7048e8);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; box-shadow: 0 8px 20px rgba(76,110,245,.35);
+  }
+  .login-card h2 { text-align: center; font-size: 19px; font-weight: 700; color: #2d3748; }
+  .login-sub { text-align: center; font-size: 13px; color: #a0aec0; margin: 7px 0 24px; }
+  .login-field { margin-bottom: 15px; }
+  .login-field label { display: block; font-size: 12.5px; color: #718096; margin-bottom: 6px; }
+  .login-field input {
+    width: 100%; padding: 11px 13px; border: 1px solid #cbd5e0; border-radius: 9px;
+    font-size: 14.5px; font-family: inherit; transition: border-color .2s, box-shadow .2s;
+  }
+  .login-field input:focus {
+    outline: none; border-color: #4c6ef5; box-shadow: 0 0 0 3px rgba(76,110,245,.15);
+  }
+  .login-error { min-height: 18px; font-size: 12.5px; color: #e03131; margin-bottom: 10px; text-align: center; }
+  .login-btn {
+    width: 100%; padding: 12px; font-size: 15px; font-weight: 600; letter-spacing: 2px;
+    border-radius: 9px; background: linear-gradient(135deg,#4c6ef5,#7048e8);
+    color: #fff; border: none; cursor: pointer; transition: opacity .2s, transform .1s;
+  }
+  .login-btn:hover { opacity: .92; }
+  .login-btn:active { transform: translateY(1px); }
+  .switch-line {
+    margin-top: 18px; text-align: center; font-size: 13px; color: #718096;
+  }
+  .switch-line a {
+    color: #4c6ef5; font-weight: 600; text-decoration: none; cursor: pointer;
+  }
+  .switch-line a:hover { text-decoration: underline; }
+  .login-tips {
+    margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;
+    font-size: 12px; color: #a0aec0; line-height: 1.9; text-align: center;
+  }
+  .login-tips code {
+    background: #edf2f7; color: #4c6ef5; padding: 1px 6px;
+    border-radius: 4px; font-family: Consolas, monospace; font-size: 11.5px;
+  }
+
+  /* ============ 主应用 ============ */
+  .app-page { padding: 20px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg,#4c6ef5,#7048e8); color: #fff;
+    padding: 20px 26px; border-radius: 12px; margin-bottom: 18px;
+    box-shadow: 0 4px 16px rgba(76,110,245,.3);
+  }
+  .header-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 21px; font-weight: 600; }
+  header p { font-size: 13px; opacity: .85; margin-top: 6px; }
+  .user-box {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.16); padding: 6px 10px 6px 6px; border-radius: 30px;
+  }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: #fff; color: #4c6ef5;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; flex: none;
+  }
+  .user-name { font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .user-role { font-size: 11px; opacity: .8; }
+  .btn-logout {
+    background: rgba(255,255,255,.22); color: #fff; padding: 6px 15px; border-radius: 20px;
+    font-size: 13px; border: none; cursor: pointer; transition: background .2s; font-family: inherit;
+  }
+  .btn-logout:hover { background: rgba(255,255,255,.34); }
+
+  .panel {
+    background: #fff; border-radius: 12px; padding: 20px 24px;
+    margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  }
+  .panel h2 {
+    font-size: 15px; font-weight: 600; margin-bottom: 14px; color: #4c6ef5;
+    padding-left: 10px; border-left: 4px solid #4c6ef5;
+  }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 12px; margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; color: #718096; margin-bottom: 5px; }
+  .field input {
+    width: 100%; padding: 9px 11px; border: 1px solid #cbd5e0; border-radius: 7px;
+    font-size: 14px; font-family: inherit; transition: border-color .2s, box-shadow .2s;
+  }
+  .field input:focus { outline: none; border-color: #4c6ef5; box-shadow: 0 0 0 3px rgba(76,110,245,.15); }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  button {
+    padding: 9px 18px; border: none; border-radius: 7px; font-size: 14px;
+    cursor: pointer; transition: all .2s; font-family: inherit;
+  }
+  button:active { transform: translateY(1px); }
+  .btn-primary { background: #4c6ef5; color: #fff; } .btn-primary:hover { background: #4263eb; }
+  .btn-success { background: #37b24d; color: #fff; } .btn-success:hover { background: #2f9e44; }
+  .btn-success:disabled { background: #cbd5e0; color: #fff; cursor: not-allowed; }
+  .btn-danger { background: #f03e3e; color: #fff; } .btn-danger:hover { background: #e03131; }
+  .btn-ghost { background: #e2e8f0; color: #4a5568; } .btn-ghost:hover { background: #cbd5e0; }
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .toolbar input {
+    padding: 9px 12px; border: 1px solid #cbd5e0; border-radius: 7px;
+    font-size: 14px; width: 240px; font-family: inherit;
+  }
+  .toolbar input:focus { outline: none; border-color: #4c6ef5; box-shadow: 0 0 0 3px rgba(76,110,245,.15); }
+  .hint { font-size: 12px; color: #a0aec0; }
+  .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px; }
+  thead th {
+    background: #f7fafc; color: #4a5568; font-weight: 600; font-size: 13px;
+    padding: 11px 10px; text-align: center; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
+  }
+  tbody td { padding: 10px; text-align: center; border-bottom: 1px solid #edf2f7; }
+  tbody tr:hover { background: #f7f9ff; }
+  tbody tr:last-child td { border-bottom: none; }
+  .score-high { color: #2f9e44; font-weight: 600; }
+  .score-mid  { color: #e8590c; font-weight: 600; }
+  .score-low  { color: #e03131; font-weight: 600; }
+  .rank {
+    display: inline-block; width: 22px; height: 22px; line-height: 22px;
+    border-radius: 50%; font-size: 12px; background: #e2e8f0; color: #4a5568;
+  }
+  .rank-1 { background: #ffd43b; color: #7a5b00; }
+  .rank-2 { background: #ced4da; color: #495057; }
+  .rank-3 { background: #f4a261; color: #7a3e00; }
+  .empty { text-align: center; padding: 40px 10px; color: #a0aec0; font-size: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 12px; margin-top: 16px; }
+  .stat { background: #f7fafc; border-radius: 9px; padding: 14px 16px; border-left: 4px solid #4c6ef5; }
+  .stat .label { font-size: 12px; color: #718096; margin-bottom: 5px; }
+  .stat .value { font-size: 20px; font-weight: 700; color: #2d3748; }
+  .stat .value small { font-size: 13px; font-weight: 400; color: #a0aec0; }
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .badge-admin { background: #dbe4ff; color: #3b5bdb; }
+  .badge-student { background: #d3f9d8; color: #2b8a3e; }
+
+  .my-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
+    padding-bottom: 18px; border-bottom: 1px dashed #e2e8f0;
+  }
+  .avatar.big {
+    width: 54px; height: 54px; font-size: 23px;
+    background: linear-gradient(135deg,#4c6ef5,#7048e8); color: #fff;
+  }
+  .my-name { font-size: 18px; font-weight: 700; }
+  .my-meta { font-size: 13px; color: #718096; margin-top: 4px; }
+  .my-subjects { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 14px; margin-bottom: 16px; }
+  .subject-card {
+    border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px 14px;
+    text-align: center; background: #f8fafc; transition: transform .2s, box-shadow .2s;
+  }
+  .subject-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(76,110,245,.12); }
+  .subject-name { font-size: 13px; color: #718096; margin-bottom: 8px; }
+  .subject-score { font-size: 30px; font-weight: 700; line-height: 1.1; }
+  .subject-level { font-size: 12px; color: #a0aec0; margin-top: 8px; }
+  .notice {
+    background: #fff4e6; border: 1px solid #ffd8a8; color: #d9480f;
+    padding: 12px 16px; border-radius: 9px; font-size: 13px; margin-bottom: 16px;
+  }
+
+  .toast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: #2d3748; color: #fff; padding: 12px 24px; border-radius: 8px;
+    font-size: 14px; opacity: 0; transition: all .3s; pointer-events: none; z-index: 999;
+    box-shadow: 0 6px 20px rgba(0,0,0,.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.error { background: #e03131; }
+  .toast.success { background: #2f9e44; }
+</style>
+</head>
+<body>
+
+<!-- ==================== 登录 / 注册页 ==================== -->
+<div class="login-page" id="loginPage">
+
+  <!-- 登录卡片 -->
+  <form class="login-card" id="loginForm" autocomplete="off">
+    <div class="login-logo">📊</div>
+    <h2>学生成绩管理系统</h2>
+    <p class="login-sub">请使用学号和密码登录</p>
+    <div class="login-field">
+      <label>学号</label>
+      <input type="text" id="login-user" placeholder="请输入学号">
+    </div>
+    <div class="login-field">
+      <label>密码</label>
+      <input type="password" id="login-pass" placeholder="请输入密码">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button type="submit" class="login-btn">登 录</button>
+    <div class="switch-line">还没有账号？<a id="to-register">立即注册</a></div>
+    <div class="login-tips">新注册用户初始密码为 <code>123456</code></div>
+  </form>
+
+  <!-- 注册卡片 -->
+  <form class="login-card" id="registerForm" autocomplete="off" style="display:none">
+    <div class="login-logo">📝</div>
+    <h2>注册新账号</h2>
+    <p class="login-sub">创建你的学号账号，初始密码统一为 123456</p>
+    <div class="login-field">
+      <label>学号（登录用户名） *</label>
+      <input type="text" id="reg-id" placeholder="如 2024001">
+    </div>
+    <div class="login-field">
+      <label>姓名 *</label>
+      <input type="text" id="reg-name" placeholder="如 张三">
+    </div>
+    <div class="login-error" id="reg-error"></div>
+    <button type="submit" class="login-btn">注 册</button>
+    <div class="switch-line">已有账号？<a id="to-login">返回登录</a></div>
+    <div class="login-tips">
+      注册成功后请用 <code>123456</code> 登录，登录后可查看成绩
+    </div>
+  </form>
+</div>
+
+<!-- ==================== 主应用 ==================== -->
+<div class="app-page" id="appPage" style="display:none">
+  <div class="container">
+    <header>
+      <div class="header-inner">
+        <div>
+          <h1>📊 学生成绩管理系统</h1>
+          <p id="header-tip">支持录入、修改、删除、查询与统计分析 · 数据自动保存在浏览器本地</p>
+        </div>
+        <div class="user-box">
+          <div class="avatar" id="user-avatar">管</div>
+          <div>
+            <div class="user-name" id="user-name">管理员</div>
+            <div class="user-role" id="user-role">管理员</div>
+          </div>
+          <button class="btn-logout" id="btnLogout" title="退出后可切换其他账号登录">退出登录</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 管理员：录入 / 编辑 -->
+    <div class="panel" id="entryPanel">
+      <h2 id="form-title">录入学生成绩</h2>
+      <div class="form-grid">
+        <div class="field"><label>学号 *</label><input type="text" id="inp-id" placeholder="如 2024001"></div>
+        <div class="field"><label>姓名 *</label><input type="text" id="inp-name" placeholder="如 张三"></div>
+        <div class="field"><label>语文 *</label><input type="number" id="inp-chinese" min="0" max="100" step="0.5" placeholder="0-100"></div>
+        <div class="field"><label>数学 *</label><input type="number" id="inp-math" min="0" max="100" step="0.5" placeholder="0-100"></div>
+        <div class="field"><label>英语 *</label><input type="number" id="inp-english" min="0" max="100" step="0.5" placeholder="0-100"></div>
+        <div class="field"><label>登录密码</label><input type="text" id="inp-password" placeholder="留空默认 123456"></div>
+      </div>
+      <div class="btns">
+        <button class="btn-primary" id="btn-add">➕ 添加学生</button>
+        <button class="btn-success" id="btn-update" disabled>✏️ 保存修改</button>
+        <button class="btn-ghost" id="btn-reset">🔄 清空输入</button>
+      </div>
+    </div>
+
+    <!-- 管理员：学生名单 -->
+    <div class="panel" id="listPanel">
+      <h2>学生名单</h2>
+      <div class="toolbar">
+        <input type="text" id="inp-search" placeholder="🔍 按学号或姓名搜索...">
+        <span class="hint">点击表格中的「编辑」按钮可修改该学生</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>排名</th><th>学号</th><th>姓名</th>
+              <th>语文</th><th>数学</th><th>英语</th>
+              <th>总分</th><th>平均分</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <!-- 管理员：登录记录 -->
+    <div class="panel" id="logPanel">
+      <h2>登录记录</h2>
+      <div class="toolbar">
+        <span class="hint" id="log-count">暂无登录记录</span>
+        <button class="btn-ghost" id="btn-clear-logs" style="padding:6px 14px;font-size:13px">清空记录</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>登录时间</th><th>用户名</th><th>姓名</th><th>角色</th></tr>
+          </thead>
+          <tbody id="log-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 学生：我的成绩 -->
+    <div class="panel" id="myScorePanel" style="display:none">
+      <h2>我的成绩</h2>
+      <div id="my-notice"></div>
+      <div class="my-header">
+        <div class="avatar big" id="my-avatar">?</div>
+        <div>
+          <div class="my-name" id="my-name">-</div>
+          <div class="my-meta" id="my-meta">-</div>
+        </div>
+      </div>
+      <div class="my-subjects" id="my-subjects"></div>
+      <div class="stats" id="my-summary"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'student_scores_v1';
+  const SESSION_KEY = 'student_scores_session_v1';
+  const LOG_KEY = 'student_scores_loginlog_v1';
+  const DEFAULT_PASSWORD = '123456';
+  const MAX_LOGS = 200;
+
+  // 管理员账号：用户名 admin，密码 admin123（界面不展示）
+  const ADMIN_ACCOUNT = { username: 'admin', password: 'admin123', name: '管理员' };
+
+  const SUBJECTS = ['chinese', 'math', 'english'];
+  const SUBJECT_LABELS = { chinese: '语文', math: '数学', english: '英语' };
+
+  let students = [];
+  let loginLogs = [];
+  let editingId = null;
+  let currentUser = null;
+
+  const $ = (id) => document.getElementById(id);
+  const inputs = {
+    id: $('inp-id'), name: $('inp-name'),
+    chinese: $('inp-chinese'), math: $('inp-math'), english: $('inp-english'),
+    password: $('inp-password')
+  };
+  const tbody = $('tbody');
+  const logTbody = $('log-tbody');
+  const statsBox = $('stats');
+  const toastEl = $('toast');
+  const btnUpdate = $('btn-update');
+
+  let toastTimer = null;
+  function toast(msg, type) {
+    toastEl.textContent = msg;
+    toastEl.className = 'toast show' + (type ? ' ' + type : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastEl.className = 'toast'; }, 2200);
+  }
+
+  const fmtScore = (n) => {
+    const v = Math.round(n * 10) / 10;
+    return Number.isInteger(v) ? String(v) : v.toFixed(1);
+  };
+  const totalOf = (s) => SUBJECTS.reduce((sum, k) => sum + s[k], 0);
+  const avgOf   = (s) => totalOf(s) / SUBJECTS.length;
+
+  function scoreClass(v) {
+    if (v >= 85) return 'score-high';
+    if (v >= 60) return 'score-mid';
+    return 'score-low';
+  }
+  function levelOf(v) {
+    if (v >= 90) return '优秀';
+    if (v >= 80) return '良好';
+    if (v >= 70) return '中等';
+    if (v >= 60) return '及格';
+    return '不及格';
+  }
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function escapeAttr(str) {
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+  function fmtTime(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '-';
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+
+  function buildRankMap(list) {
+    const ranked = [...list].sort((a, b) => totalOf(b) - totalOf(a));
+    const map = new Map();
+    ranked.forEach((s, i) => {
+      if (i > 0 && totalOf(ranked[i - 1]) === totalOf(s)) {
+        map.set(s.id, map.get(ranked[i - 1].id));
+      } else {
+        map.set(s.id, i + 1);
+      }
+    });
+    return map;
+  }
+
+  // ---------- 存储 ----------
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      students = (Array.isArray(data) ? data : []).map(s => ({
+        ...s,
+        password: s.password || DEFAULT_PASSWORD
+      }));
+    } catch (e) { students = []; }
+
+    try {
+      const raw = localStorage.getItem(LOG_KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      loginLogs = Array.isArray(data) ? data : [];
+    } catch (e) { loginLogs = []; }
+  }
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(students)); }
+    catch (e) { toast('保存失败：浏览器存储空间不足', 'error'); }
+  }
+  function saveLogs() {
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(loginLogs)); } catch (e) {}
+  }
+
+  // 记录一次登录
+  function recordLogin(user) {
+    loginLogs.unshift({
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      time: new Date().toISOString()
+    });
+    if (loginLogs.length > MAX_LOGS) loginLogs.length = MAX_LOGS;
+    saveLogs();
+  }
+
+  // ---------- 登录 / 注册 ----------
+  function doLogin(username, password) {
+    username = (username || '').trim();
+    password = (password || '').trim();
+    if (!username || !password) return { ok: false, msg: '请输入学号和密码' };
+
+    // 管理员通道
+    if (username.toLowerCase() === ADMIN_ACCOUNT.username) {
+      if (password !== ADMIN_ACCOUNT.password) {
+        return { ok: false, msg: '管理员密码错误，请重试' };
+      }
+      return {
+        ok: true,
+        user: { role: 'admin', username: ADMIN_ACCOUNT.username, name: ADMIN_ACCOUNT.name }
+      };
+    }
+
+    // 学生通道
+    const s = students.find(x => x.id === username);
+    if (!s || password !== s.password) {
+      return { ok: false, msg: '学号或密码错误，请重试' };
+    }
+    return {
+      ok: true,
+      user: { role: 'student', username: s.id, name: s.name, id: s.id }
+    };
+  }
+
+  // 注册：创建学生账号，初始密码 123456，成绩默认为 0
+  function doRegister(id, name) {
+    id = (id || '').trim();
+    name = (name || '').trim();
+
+    if (!id) return { ok: false, msg: '请输入学号' };
+    if (!name) return { ok: false, msg: '请输入姓名' };
+    if (id.length < 3) return { ok: false, msg: '学号至少 3 个字符' };
+    if (id.toLowerCase() === ADMIN_ACCOUNT.username) {
+      return { ok: false, msg: '该学号为系统保留字，请更换' };
+    }
+    if (students.some(s => s.id === id)) {
+      return { ok: false, msg: '该学号已被注册，请直接登录或更换学号' };
+    }
+
+    students.push({
+      id: id,
+      name: name,
+      chinese: 0,
+      math: 0,
+      english: 0,
+      password: DEFAULT_PASSWORD,
+      createdAt: new Date().toISOString()
+    });
+    save();
+    return { ok: true, student: { id, name } };
+  }
+
+  function restoreSession() {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      const sess = JSON.parse(raw);
+      if (!sess || !sess.role) return null;
+      if (sess.role === 'admin') return sess;
+      if (sess.role === 'student' && students.some(s => s.id === sess.id)) return sess;
+      localStorage.removeItem(SESSION_KEY);
+    } catch (e) {}
+    return null;
+  }
+
+  function enterApp() {
+    $('loginPage').style.display = 'none';
+    $('appPage').style.display = 'block';
+    applyRoleUI();
+    renderAll();
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem(SESSION_KEY);
+    $('appPage').style.display = 'none';
+    $('loginPage').style.display = 'flex';
+    showLoginCard();
+    $('login-user').value = '';
+    $('login-pass').value = '';
+    $('login-error').textContent = '';
+    resetForm();
+    $('login-user').focus();
+  }
+
+  function showLoginCard() {
+    $('loginForm').style.display = '';
+    $('registerForm').style.display = 'none';
+    $('login-error').textContent = '';
+    $('reg-error').textContent = '';
+  }
+  function showRegisterCard() {
+    $('loginForm').style.display = 'none';
+    $('registerForm').style.display = '';
+    $('reg-error').textContent = '';
+    $('reg-id').value = '';
+    $('reg-name').value = '';
+    $('reg-id').focus();
+  }
+
+  function applyRoleUI() {
+    const isAdmin = currentUser.role === 'admin';
+    $('entryPanel').style.display = isAdmin ? '' : 'none';
+    $('listPanel').style.display = isAdmin ? '' : 'none';
+    $('logPanel').style.display = isAdmin ? '' : 'none';
+    $('myScorePanel').style.display = isAdmin ? 'none' : '';
+
+    $('user-name').textContent = currentUser.name;
+    $('user-avatar').textContent = (currentUser.name || '?').charAt(0);
+    $('user-role').textContent = isAdmin ? '管理员' : '学生';
+    $('header-tip').textContent = isAdmin
+      ? '支持录入、修改、删除、查询与统计分析 · 数据自动保存在浏览器本地'
+      : '这里仅显示你自己的成绩信息，如需修改请联系老师';
+  }
+
+  // ---------- 表单 ----------
+  function readForm() {
+    const id = inputs.id.value.trim();
+    const name = inputs.name.value.trim();
+
+    if (!id) { toast('请输入学号', 'error'); inputs.id.focus(); return null; }
+    if (!name) { toast('请输入姓名', 'error'); inputs.name.focus(); return null; }
+    if (id.toLowerCase() === ADMIN_ACCOUNT.username) {
+      toast('该学号为系统保留字，请更换', 'error'); inputs.id.focus(); return null;
+    }
+
+    const rec = { id, name };
+    for (const key of SUBJECTS) {
+      const raw = inputs[key].value.trim();
+      if (raw === '') { toast(`请输入${SUBJECT_LABELS[key]}成绩`, 'error'); inputs[key].focus(); return null; }
+      const val = Number(raw);
+      if (!Number.isFinite(val)) { toast(`${SUBJECT_LABELS[key]}成绩必须是数字`, 'error'); inputs[key].focus(); return null; }
+      if (val < 0 || val > 100) { toast(`${SUBJECT_LABELS[key]}成绩需在 0~100 之间`, 'error'); inputs[key].focus(); return null; }
+      rec[key] = Math.round(val * 10) / 10;
+    }
+
+    const pwd = inputs.password.value.trim();
+    if (pwd && pwd.length < 4) { toast('登录密码至少 4 位', 'error'); inputs.password.focus(); return null; }
+    rec._pwd = pwd;
+    return rec;
+  }
+
+  function fillForm(s) {
+    inputs.id.value = s.id;
+    inputs.name.value = s.name;
+    SUBJECTS.forEach(k => { inputs[k].value = s[k]; });
+    inputs.password.value = s.password || DEFAULT_PASSWORD;
+    inputs.password.placeholder = '留空则保留原密码';
+    editingId = s.id;
+    $('form-title').textContent = `编辑学生：${s.name}（${s.id}）`;
+    btnUpdate.disabled = false;
+    inputs.id.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetForm() {
+    Object.values(inputs).forEach(el => { el.value = ''; });
+    inputs.password.placeholder = '留空默认 123456';
+    editingId = null;
+    $('form-title').textContent = '录入学生成绩';
+    btnUpdate.disabled = true;
+  }
+
+  function addStudent() {
+    const rec = readForm();
+    if (!rec) return;
+    if (students.some(s => s.id === rec.id)) { toast(`学号 ${rec.id} 已存在，请更换`, 'error'); return; }
+    rec.password = rec._pwd || DEFAULT_PASSWORD;
+    delete rec._pwd;
+    students.push(rec);
+    save(); renderAll(); resetForm();
+    toast(`已添加：${rec.name}（初始密码 ${rec.password}）`, 'success');
+  }
+
+  function updateStudent() {
+    if (editingId === null) return;
+    const rec = readForm();
+    if (!rec) return;
+    const idx = students.findIndex(s => s.id === editingId);
+    if (idx === -1) { toast('该学生已不存在', 'error'); resetForm(); return; }
+    if (rec.id !== editingId && students.some(s => s.id === rec.id)) {
+      toast(`学号 ${rec.id} 已被占用`, 'error'); return;
+    }
+    const old = students[idx];
+    rec.password = rec._pwd || old.password || DEFAULT_PASSWORD;
+    if (old.createdAt) rec.createdAt = old.createdAt;
+    delete rec._pwd;
+    students[idx] = rec;
+    save(); renderAll(); resetForm();
+    toast('修改已保存', 'success');
+  }
+
+  function removeStudent(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+    if (!confirm(`确定删除「${s.name}（${s.id}）」的成绩记录吗？`)) return;
+    students = students.filter(x => x.id !== id);
+    save();
+    if (editingId === id) resetForm();
+    renderAll();
+    toast('已删除', 'success');
+  }
+
+  // ---------- 渲染 ----------
+  function renderAll() {
+    if (!currentUser) return;
+    if (currentUser.role === 'admin') {
+      renderAdminTable();
+      renderLogs();
+    } else {
+      renderMyScores();
+    }
+  }
+
+  function renderAdminTable() {
+    const keyword = $('inp-search').value.trim().toLowerCase();
+    const rankMap = buildRankMap(students);
+    const list = students.filter(s =>
+      !keyword || s.id.toLowerCase().includes(keyword) || s.name.toLowerCase().includes(keyword)
+    ).sort((a, b) => rankMap.get(a.id) - rankMap.get(b.id));
+
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" class="empty">
+        ${students.length === 0 ? '暂无学生记录，请在上方录入' : '没有找到匹配的学生'}
+      </td></tr>`;
+    } else {
+      tbody.innerHTML = list.map(s => {
+        const rank = rankMap.get(s.id);
+        const rankCls = rank <= 3 ? ` rank-${rank}` : '';
+        return `<tr>
+          <td><span class="rank${rankCls}">${rank}</span></td>
+          <td>${escapeHtml(s.id)}</td>
+          <td>${escapeHtml(s.name)}</td>
+          ${SUBJECTS.map(k => `<td class="${scoreClass(s[k])}">${fmtScore(s[k])}</td>`).join('')}
+          <td><strong>${fmtScore(totalOf(s))}</strong></td>
+          <td>${fmtScore(avgOf(s))}</td>
+          <td>
+            <button class="btn-ghost" style="padding:5px 12px;font-size:13px"
+              onclick="window.__editStudent('${escapeAttr(s.id)}')">编辑</button>
+            <button class="btn-danger" style="padding:5px 12px;font-size:13px"
+              onclick="window.__removeStudent('${escapeAttr(s.id)}')">删除</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+    renderStats(list);
+  }
+
+  function renderStats(list) {
+    if (list.length === 0) { statsBox.innerHTML = ''; return; }
+    const n = list.length;
+    const cards = [`<div class="stat"><div class="label">当前显示人数</div><div class="value">${n}<small> 人</small></div></div>`];
+    SUBJECTS.forEach(k => {
+      const avg = list.reduce((sum, s) => sum + s[k], 0) / n;
+      cards.push(`<div class="stat"><div class="label">${SUBJECT_LABELS[k]}平均分</div><div class="value">${fmtScore(avg)}</div></div>`);
+    });
+    const overall = list.reduce((sum, s) => sum + avgOf(s), 0) / n;
+    cards.push(`<div class="stat"><div class="label">总平均分</div><div class="value">${fmtScore(overall)}</div></div>`);
+    const best = list.reduce((a, b) => (totalOf(b) > totalOf(a) ? b : a));
+    cards.push(`<div class="stat"><div class="label">最高总分</div><div class="value">${fmtScore(totalOf(best))}<small> ${escapeHtml(best.name)}</small></div></div>`);
+    statsBox.innerHTML = cards.join('');
+  }
+
+  // 管理员：登录记录
+  function renderLogs() {
+    $('log-count').textContent = loginLogs.length === 0
+      ? '暂无登录记录'
+      : `共 ${loginLogs.length} 条登录记录（最多保留 ${MAX_LOGS} 条）`;
+
+    if (loginLogs.length === 0) {
+      logTbody.innerHTML = `<tr><td colspan="4" class="empty">还没有用户登录过</td></tr>`;
+      return;
+    }
+
+    logTbody.innerHTML = loginLogs.map(l => {
+      const isAdmin = l.role === 'admin';
+      return `<tr>
+        <td>${escapeHtml(fmtTime(l.time))}</td>
+        <td>${escapeHtml(l.username || '-')}</td>
+        <td>${escapeHtml(l.name || '-')}</td>
+        <td><span class="badge ${isAdmin ? 'badge-admin' : 'badge-student'}">
+          ${isAdmin ? '管理员' : '学生'}
+        </span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderMyScores() {
+    const s = students.find(x => x.id === currentUser.id);
+    if (!s) { toast('账号信息已失效，请重新登录', 'error'); logout(); return; }
+
+    const rankMap = buildRankMap(students);
+    const rank = rankMap.get(s.id);
+    const noScores = SUBJECTS.every(k => !s[k]);
+
+    $('my-notice').innerHTML = noScores
+      ? `<div class="notice">你的成绩尚未录入，请等待老师添加后再查看。</div>`
+      : '';
+
+    $('my-avatar').textContent = s.name.charAt(0) || '?';
+    $('my-name').textContent = s.name;
+    $('my-meta').textContent = `学号 ${s.id} · 全班第 ${rank} 名 / 共 ${students.length} 人`;
+
+    $('my-subjects').innerHTML = SUBJECTS.map(k => {
+      const v = s[k];
+      return `<div class="subject-card">
+        <div class="subject-name">${SUBJECT_LABELS[k]}</div>
+        <div class="subject-score ${scoreClass(v)}">${fmtScore(v)}</div>
+        <div class="subject-level">${levelOf(v)}</div>
+      </div>`;
+    }).join('');
+
+    $('my-summary').innerHTML = `
+      <div class="stat"><div class="label">总分</div><div class="value">${fmtScore(totalOf(s))}<small> / 300</small></div></div>
+      <div class="stat"><div class="label">平均分</div><div class="value">${fmtScore(avgOf(s))}</div></div>
+      <div class="stat"><div class="label">综合等级</div><div class="value">${levelOf(avgOf(s))}</div></div>
+      <div class="stat"><div class="label">班级排名</div><div class="value">${rank}<small> / ${students.length}</small></div></div>
+    `;
+  }
+
+  // ---------- 事件 ----------
+  // 登录
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const res = doLogin($('login-user').value, $('login-pass').value);
+    if (!res.ok) {
+      $('login-error').textContent = res.msg;
+      const card = $('loginForm');
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
+      return;
+    }
+    $('login-error').textContent = '';
+    currentUser = res.user;
+    recordLogin(currentUser);                       // 记录登录
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); } catch (err) {}
+    toast(`欢迎回来，${currentUser.name}`, 'success');
+    enterApp();
+  });
+
+  // 注册
+  $('registerForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const res = doRegister($('reg-id').value, $('reg-name').value);
+    if (!res.ok) {
+      $('reg-error').textContent = res.msg;
+      const card = $('registerForm');
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
+      return;
+    }
+    $('reg-error').textContent = '';
+    toast(`注册成功！请用密码 ${DEFAULT_PASSWORD} 登录`, 'success');
+    showLoginCard();
+    $('login-user').value = res.student.id;
+    $('login-pass').value = '';
+    $('login-pass').focus();
+  });
+
+  $('to-register').addEventListener('click', function (e) {
+    e.preventDefault();
+    showRegisterCard();
+  });
+  $('to-login').addEventListener('click', function (e) {
+    e.preventDefault();
+    showLoginCard();
+    $('login-user').focus();
+  });
+
+  $('btnLogout').addEventListener('click', function () {
+    if (confirm('确定要退出登录吗？')) logout();
+  });
+
+  // 管理员操作
+  $('btn-add').addEventListener('click', addStudent);
+  btnUpdate.addEventListener('click', updateStudent);
+  $('btn-reset').addEventListener('click', resetForm);
+  $('inp-search').addEventListener('input', renderAdminTable);
+
+  $('btn-clear-logs').addEventListener('click', function () {
+    if (loginLogs.length === 0) { toast('暂无登录记录', 'error'); return; }
+    if (!confirm('确定清空所有登录记录吗？此操作不可恢复。')) return;
+    loginLogs = [];
+    saveLogs();
+    renderLogs();
+    toast('登录记录已清空', 'success');
+  });
+
+  Object.values(inputs).forEach(el => {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') editingId === null ? addStudent() : updateStudent();
+    });
+  });
+
+  window.__editStudent = function (id) {
+    const s = students.find(x => x.id === id);
+    if (s) fillForm(s);
+  };
+  window.__removeStudent = function (id) { removeStudent(id); };
+
+  // ---------- 启动 ----------
+  load();
+  const sess = restoreSession();
+  if (sess) {
+    currentUser = sess;
+    enterApp();
+  } else {
+    $('loginPage').style.display = 'flex';
+    showLoginCard();
+    $('login-user').focus();
+  }
+})();
+</script>
+</body>
+</html>
